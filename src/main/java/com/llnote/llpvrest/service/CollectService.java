@@ -1,34 +1,29 @@
-package com.llnote.llpvrest.controller;
+package com.llnote.llpvrest.service;
 
-import com.llnote.llpvrest.repository.KafkaRepository;
+import com.llnote.llpvrest.mapper.CollectMapper;
+import com.llnote.llpvrest.model.CateVO;
+import com.llnote.llpvrest.model.DataVO;
+import com.llnote.llpvrest.repository.MariaDBRepository;
 import javax.servlet.http.HttpServletRequest;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-@RestController
-public class CollectionController {
-
+@RequiredArgsConstructor
+@Service
+public class CollectService {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  @NonNull
+  private final MariaDBRepository mariaDBRepository;
 
-  private final KafkaRepository kafkaRepository;
-
-  public CollectionController(KafkaRepository kafkaRepository) {
-    this.kafkaRepository = kafkaRepository;
-  }
-
-  @RequestMapping(value = "/rest", method = RequestMethod.POST)
-  @ResponseBody
-  public ResponseEntity<String> rest(@RequestBody String data) {
+  public ResponseEntity<String> save(String data) {
     int responseCode = 200;
     String msg = "ok";
     try {
@@ -49,7 +44,7 @@ public class CollectionController {
         int run_sec = jo.getInt("run_sec");
         String stored_time = jo.getString("stored_time");
 
-        if ("".equals(ip)) //ip 검증해야함
+        if ("".equals(ip))
         {
           isCheck = false;
         }
@@ -70,15 +65,14 @@ public class CollectionController {
         }
 
         if (isCheck) {
-          JSONObject param = new JSONObject();
-          param.put("client_ip", ip);
-          param.put("_datetime", _datetime);
-          param.put("run_file", run_file);
-          param.put("run_title", run_title);
-          param.put("run_sec", run_sec);
-          param.put("stored_time", stored_time);
-
-          kafkaRepository.saveKafka(param);
+          DataVO dataVO = new DataVO();
+          dataVO.setRun_file(run_file);
+          dataVO.setRun_title(run_title);
+          dataVO.setRun_sec(run_sec);
+          dataVO.set_datetime(_datetime);
+          dataVO.setStored_time(stored_time);
+          dataVO.setClient_ip(ip);
+          mariaDBRepository.save(dataVO);
         }
       }
     } catch (Exception e) {
@@ -90,6 +84,4 @@ public class CollectionController {
     logger.info("rest 요청응답 (" + responseCode + ")");
     return ResponseEntity.status(responseCode).body(msg);
   }
-
-
 }
