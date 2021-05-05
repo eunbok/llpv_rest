@@ -1,7 +1,5 @@
 package com.llnote.llpvrest.service;
 
-import com.llnote.llpvrest.mapper.CollectMapper;
-import com.llnote.llpvrest.model.CateVO;
 import com.llnote.llpvrest.model.DataVO;
 import com.llnote.llpvrest.repository.MariaDBRepository;
 import javax.servlet.http.HttpServletRequest;
@@ -76,9 +74,11 @@ public class CollectService {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
-
-      responseCode = 500;
+      if("Value run_title of type java.lang.String cannot be converted to JSONArray".equals(e.getMessage())){
+        responseCode = 400;
+      }else{
+        responseCode = 500;
+      }
       msg = e.getMessage();
     }
     logger.info("rest 요청응답 (" + responseCode + ")");
